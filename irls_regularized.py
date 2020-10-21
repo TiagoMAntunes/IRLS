@@ -28,12 +28,10 @@ class RegularizedIRLS:
             sparse_X = sparse.csr_matrix(X.T)
 
             #training
-            diff = [0, 1]
             steps = 0
             max_acc_count = 0
             best_accuracy = 0
-            stop_condition = threshold
-            while max_acc_count < stop_condition and steps < self.maxsteps:
+            while max_acc_count < threshold and steps < self.maxsteps:
                 steps+=1
 
                 #no need to calculate total R
@@ -49,9 +47,6 @@ class RegularizedIRLS:
                 hessian = np.linalg.pinv(regularization * np.identity(124) + common)
                 new_W = hessian.dot(common.dot(W) + X.dot(Y - predictions))
                 
-                # diff[0] = diff[1]
-                # diff[1] = np.linalg.norm(W - (-regularization*W + X.dot(Y-predictions))) # difference in gradient
-                # print('[DEBUG] diff is {}'.format(np.abs(diff[1] - diff[0])))
                 accuracy = self.test(W,X,Y)
                 if accuracy > best_accuracy:
                     best_accuracy = accuracy
@@ -104,15 +99,13 @@ if __name__ == '__main__':
     X_test = p.transform_x()
     Y_test = p.transform_y()
 
-    #print(m.models)
     
     accuracies = [] # training, test
     for model in m.models:
         tmp = []
         for x,y in ((X.T,Y), (X_test.T, Y_test)):
             non_folded_test = m.test(model['models'][0][2], x,y)
-            #w = sum(list(map(lambda m: m[2], model['models'][1:]))) / len(model['models'][1:])
-            vals = [m.test(w[2],x,y) for w in model['models']]
+            vals = [m.test(w[2],x,y) for w in model['models']] # for each folding weights calculate the accuracy on both the training and test set
             tmp.append((non_folded_test,np.mean(vals)))
         accuracies.append(tmp)
             
